@@ -1,21 +1,37 @@
 import sys
-import nltk
-nltk.download(['punkt', 'wordnet', 'averaged_perceptron_tagger', 'vader_lexicon'])
+import pickle
+
 import sqlite3
+
 import re
 import numpy as np
 import pandas as pd
 
+import nltk
+nltk.download(['punkt', 'wordnet', 'averaged_perceptron_tagger', 'vader_lexicon', 'stopwords'])
+
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
-from sklearn.model_selection import train_test_split
-from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
-from sklearn.pipeline import Pipeline
+
+from nltk import pos_tag
+from nltk.corpus import stopwords
+
+
+
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.multioutput import MultiOutputClassifier
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.decomposition import PCA
 
-import pickle
+import string
+
+from gensim.models import Word2Vec
+
+import matplotlib.pyplot as plt
 
 
 
@@ -50,21 +66,63 @@ def tokenize(text):
 
     return clean_tokens
 
+# Define preprocessing functions
+def preprocess_text(text):
+    # Remove punctuation and lowercase text
+    text = text.translate(str.maketrans('', '', string.punctuation)).lower()
+    # Tokenize the text
+    #text = tokenize(text)
+    tokens = word_tokenize(text)
+    tags = pos_tag(tokens)
+    tokens = [word for word, tag in tags if tag.startswith('N') | tag.startswith('V')]
+    
+    lemmatizer = WordNetLemmatizer()
+
+    clean_tokens = []
+    for tok in tokens:
+        clean_tok = lemmatizer.lemmatize(tok).lower().strip()
+        clean_tokens.append(clean_tok)
+    # Remove stopwords
+    stop_words = set(stopwords.words('english'))
+    clean_tokens = [word for word in clean_tokens if word not in stop_words]
+    return clean_tokens
 
 
-def build_model():
+class W2vVectorizer(BaseEstimator, TransformerMixin):
+    def __init__(self, w2v_model):
+        self.w2v_model = w2v_model
+
+    def fit(self, X, y):
+        return self
+
+    def transform(self, X):
+        word_vectors = np.zeros((len(X), self.w2v_model.vector_size))
+        for i, sentence in enumerate(X):
+            for word in preprocess_text(sentence):
+                if word in self.w2v_model.wv:
+                    word_vectors[i] += self.w2v_model.wv[word]
+        return word_vectors
+
+
+
+def build_model(X_preproc):
+    w2v_model = Word2Vec(X_preproc, window=5, min_count=5, workers=4)
     pipeline = Pipeline([
-        ('vect', CountVectorizer(tokenizer=tokenize)),
-        ('tfidf', TfidfTransformer()),
-        ('multi_clf', MultiOutputClassifier(RandomForestClassifier()))
+        ('features', FeatureUnion([
+            ('text_pipeline', Pipeline([
+                ('vect', CountVectorizer(tokenizer=tokenize)),
+                ('tfidf', TfidfTransformer())
+                ])),
+            # Define Word2Vec transformer
+            ('w2v_transformer', Pipeline([
+                ('word2vec', W2vVectorizer(w2v_model)),
+                ('pca', PCA(n_components=50))
+                ]))
+        ])),
+        ('clf', MultiOutputClassifier(RandomForestClassifier()))
     ])
 
-    #X_train, X_test, Y_train, Y_test = train_test_split(X, Y)
-
-    #pipeline.fit(X_train, Y_train)
-
     return pipeline
-
 
 
 
@@ -77,8 +135,15 @@ def evaluate_model(model, X_test, Y_test, category_names):
         print(column + '\n' , colreport)
         report.append(colreport)
         i += 1
+    
+    f1_score = 0
+    for i in range(len(report)):
+        temp = float(report[i].split()[27])
+        f1_score += temp
+    
+    avg_f1_score = f1_score / len(report)
 
-    return report
+    return report, avg_f1_score
 
 
 def save_model(model, model_filepath):
@@ -90,11 +155,15 @@ def main():
     if len(sys.argv) == 3:
         database_filepath, model_filepath = sys.argv[1:]
         print('Loading data...\n    DATABASE: {}'.format(database_filepath))
+
         X, Y, category_names = load_data(database_filepath)
         X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2)
+
+        X_preproc = [preprocess_text(text) for text in X]
+        
         
         print('Building model...')
-        model = build_model()
+        model = build_model(X_preproc)
         
         print('Training model...')
         model.fit(X_train, Y_train)
