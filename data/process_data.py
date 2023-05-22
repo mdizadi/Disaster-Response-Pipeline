@@ -5,11 +5,9 @@ from sqlalchemy import create_engine
 def load_data(messages_filepath, categories_filepath):
     
     # load messages dataset
-    #messages = pd.read_csv(messages_filepath + '/disaster_messages.csv')
     messages = pd.read_csv(messages_filepath)
 
     # load categories dataset
-    #categories = pd.read_csv(categories_filepath + '/disaster_categories.csv')
     categories = pd.read_csv(categories_filepath)
 
     # merge datasets
@@ -26,9 +24,7 @@ def clean_data(df):
     # select the first row of the categories dataframe
     row = categories.iloc[0]
 
-    # use this row to extract a list of new column names for categories.
-    # one way is to apply a lambda function that takes everything 
-    # up to the second to last character of each string with slicing
+    # extract a list of new column names for categories.
     category_colnames = row.apply(lambda x : x[:-2])
 
     categories.columns = category_colnames
@@ -69,7 +65,6 @@ def clean_data(df):
 
 
 def save_data(df, database_filepath):
-    #engine = create_engine(f'sqlite:///{database_filepath}' + '/DisasterResponse.db')
     engine = create_engine(f'sqlite:///{database_filepath}')
     df.to_sql('DisasterResponse', con=engine, if_exists='replace', index=False)  
 

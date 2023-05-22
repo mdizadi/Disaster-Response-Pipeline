@@ -14,8 +14,6 @@ import string
 from gensim.models import Word2Vec
 from sklearn.base import BaseEstimator, TransformerMixin
 
-
-
 from flask import Flask
 from flask import render_template, request, jsonify
 from plotly.graph_objs import Bar
@@ -27,6 +25,15 @@ from sqlalchemy import create_engine
 app = Flask(__name__)
 
 def tokenize(text):
+    """
+    Tokenize text by converting to lowercase, stripping whitespace, and lemmatizing.
+
+    Args:
+    text (str): The text to be tokenized.
+
+    Returns:
+    clean_tokens (list): A list of cleaned and lemmatized tokens.
+    """
     tokens = word_tokenize(text)
     lemmatizer = WordNetLemmatizer()
 
@@ -37,12 +44,19 @@ def tokenize(text):
 
     return clean_tokens
 
-# Define preprocessing functions
 def preprocess_text(text):
-    # Remove punctuation and lowercase text
+    """
+    Preprocess text by removing punctuation, converting to lowercase, tokenizing, lemmatizing,
+    removing non-nouns and non-verbs, and removing stopwords.
+
+    Args:
+    text (str): The text to be preprocessed.
+
+    Returns:
+    clean_tokens (list): A list of cleaned and preprocessed tokens.
+    """
     text = text.translate(str.maketrans('', '', string.punctuation)).lower()
-    # Tokenize the text
-    #text = tokenize(text)
+    
     tokens = word_tokenize(text)
     tags = pos_tag(tokens)
     tokens = [word for word, tag in tags if tag.startswith('N') | tag.startswith('V')]
@@ -53,12 +67,26 @@ def preprocess_text(text):
     for tok in tokens:
         clean_tok = lemmatizer.lemmatize(tok).lower().strip()
         clean_tokens.append(clean_tok)
-    # Remove stopwords
+
     stop_words = set(stopwords.words('english'))
     clean_tokens = [word for word in clean_tokens if word not in stop_words]
     return clean_tokens
 
+
 class W2vVectorizer(BaseEstimator, TransformerMixin):
+    """
+    A custom vectorizer that converts text into word vectors using a pre-trained Word2Vec model.
+
+    Args:
+    w2v_model (gensim.models.word2vec.Word2Vec): A pre-trained Word2Vec model.
+
+    Methods:
+    fit(X, y): Fit the vectorizer to the data.
+    transform(X): Transform the data into word vectors.
+
+    Returns:
+    word_vectors (numpy.ndarray): An array of word vectors.
+    """
     def __init__(self, w2v_model):
         self.w2v_model = w2v_model
 
@@ -88,7 +116,6 @@ model = joblib.load("../models/classifier.pkl")
 def index():
     
     # extract data needed for visuals
-    # TODO: Below is an example - modify to extract data for your own visuals
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
 
@@ -96,17 +123,14 @@ def index():
     colors = ['#1f77b4', '#8c564b', '#d62728']
 
     # extract data needed for visuals
-    # TODO: Below is an example - modify to extract data for your own visuals
     Y = df.loc[:, 'related':'direct_report']
     categories = Y.columns 
     values = Y.mean()*100
 
     # create color scale
     color_scale = np.random.randint(0, 256, size=(len(categories), 3))
-    #color_scale = px.colors.sequential.Plasma
     
     # create visuals
-    # TODO: Below is an example - modify to create your own visuals
     graphs = [
         {
             'data': [
@@ -114,7 +138,6 @@ def index():
                     x=genre_names,
                     y=genre_counts,
                     marker=dict(color=colors)
-                    #marker=dict(color='rgb(158,202,225)')
                 )
             ],
 
@@ -134,7 +157,6 @@ def index():
                     x=categories,
                     y=values,
                     marker=dict(color=['rgb({},{},{})'.format(*color) for color in color_scale])
-                    #marker_color=color_scale
                 )
             ],
 
@@ -144,7 +166,11 @@ def index():
                     'title': "% of total"
                 },
                 'xaxis': {
-                    'title': "Categories"
+                    'title': {
+                    'text': "Categories",
+                    'standoff': -200,
+                    'autorange': True
+                }
                 }
             }
         }
