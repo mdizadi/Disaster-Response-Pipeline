@@ -17,7 +17,7 @@ The web app, run.py, runs in the terminal. When a user inputs a message into the
 
     - To run ETL pipeline that cleans data and stores in database
         `python data/process_data.py data/disaster_messages.csv data/disaster_categories.csv data/DisasterResponse.db`
-    - To run ML pipeline that trains classifier and saves*
+    - To run ML pipeline that trains classifier and saves[^*]
         `python models/train_classifier.py data/DisasterResponse.db models/classifier.pkl`
 
 2. Go to `app` directory: `cd app`
@@ -26,4 +26,4 @@ The web app, run.py, runs in the terminal. When a user inputs a message into the
 
 4. Click the `PREVIEW` button to open the homepage
 
-* The grid search in the main function is disabled by commenting it out, as it requires a significant amount of time to execute. Currently, the pipeline is running with its default parameters. 
+[^*] The grid search in the main function is disabled by commenting it out, as it requires a significant amount of time to execute. Currently, the pipeline is running with its default parameters. 
