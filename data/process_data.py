@@ -3,7 +3,16 @@ import pandas as pd
 from sqlalchemy import create_engine
 
 def load_data(messages_filepath, categories_filepath):
-    
+    """
+    Load and merge message and category data from CSV files.
+
+    Args:
+    messages_filepath (str): Filepath for the messages CSV file.
+    categories_filepath (str): Filepath for the categories CSV file.
+
+    Returns:
+    df (pandas DataFrame): Merged DataFrame containing messages and categories data.
+    """
     # load messages dataset
     messages = pd.read_csv(messages_filepath)
 
@@ -17,7 +26,15 @@ def load_data(messages_filepath, categories_filepath):
 
 
 def clean_data(df):
-    
+    """
+    Clean the merged DataFrame containing messages and categories data.
+
+    Args:
+    df (pandas DataFrame): Merged DataFrame containing messages and categories data.
+
+    Returns:
+    df (pandas DataFrame): Cleaned DataFrame containing messages and categories data.
+    """
     # create a dataframe of the 36 individual category columns
     categories = df['categories'].str.split(';', expand = True)
 
@@ -65,11 +82,30 @@ def clean_data(df):
 
 
 def save_data(df, database_filepath):
+    """
+    Save the cleaned DataFrame containing messages and categories data to a SQLite database.
+
+    Args:
+    df (pandas DataFrame): Cleaned DataFrame containing messages and categories data.
+    database_filepath (str): Filepath for the SQLite database.
+
+    Returns:
+    None
+    """
     engine = create_engine(f'sqlite:///{database_filepath}')
     df.to_sql('DisasterResponse', con=engine, if_exists='replace', index=False)  
 
 
 def main():
+    """
+    Load, clean, and save message and category data to a SQLite database.
+
+    Args:
+    None
+
+    Returns:
+    None
+    """
     if len(sys.argv) == 4:
 
         messages_filepath, categories_filepath, database_filepath = sys.argv[1:]

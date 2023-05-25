@@ -178,6 +178,17 @@ def build_model(X_preproc):
     return pipeline
 
 def grid_search(pipeline, X_train, Y_train):
+    """
+    Perform a grid search to find the best hyperparameters for the pipeline.
+
+    Args:
+    pipeline (sklearn Pipeline): The pipeline to perform the grid search on.
+    X_train (pandas Series): The training data.
+    Y_train (pandas DataFrame): The training labels.
+
+    Returns:
+    best_pipeline (sklearn Pipeline): The pipeline with the best hyperparameters.
+    """
     # Define the parameter grid
     parameters = {
         'features__text_pipeline__vect__ngram_range': ((1, 1), (1, 2)),
