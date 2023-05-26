@@ -26,4 +26,4 @@ The web app, run.py, runs in the terminal. When a user inputs a message into the
 
 4. Click the `PREVIEW` button to open the homepage
 
-[^1] The grid search in the main function is disabled by commenting it out, as it requires a significant amount of time to execute. Currently, the pipeline is running with its default parameters. 
+[^1]: The grid search in the main function is disabled by commenting it out, as it requires a significant amount of time to execute. Currently, the pipeline is running with its default parameters. 
