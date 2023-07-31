@@ -1,7 +1,7 @@
 # Disaster Response Pipeline Project
 
 ### Introduction
-In this project, a machine learning pipeline has been built to analyze real-time disaster messages from Appen (formerly Figure 8). The objective of the project is to classify these messages and direct them to the appropriate disaster relief agency. 
+In this *Udacity* project, a machine learning pipeline has been built to analyze real-time disaster messages from Appen (formerly Figure 8). The objective of the project is to classify these messages and direct them to the appropriate disaster relief agency. 
 
 The ETL pipeline, process_data.py, loads the messages and categories datasets, merges them, cleans the data and stores it in a SQLite database.
 
